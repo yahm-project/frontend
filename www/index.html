@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@2.7.0/dist/style.css">
     <script src="https://unpkg.com/leaflet-geosearch@2.7.0/dist/bundle.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@2.6.0/assets/css/leaflet.css">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <style>
         body {
             padding: 0;
@@ -29,7 +30,9 @@
 <div id="map"></div>
 
 <script>
-var MIN_ZOOM_TO_SHOW_DATA = 14
+const API_ENDPOINT = "http://localhost:8080"
+
+const MIN_ZOOM_TO_SHOW_DATA = 14
 
 var potHoleIcon = L.icon({
     iconUrl: '/static/img/pot-hole-marker.png',
@@ -89,9 +92,9 @@ mymap.addLayer(roadDefectsMarkerCluster);
 function addMarker(coordinates, type) {
     var icon = potHoleIcon
     /*if(type == "POTHOLE") {}
-    else if (type == "ROAD-JOINT") {}
-    else if (type == "3") {}
-    else if (type == "4") {}*/
+    else if (type == "EXPANSION_JOINT") {}
+    else if (type == "SPEED_BUMP") {}
+    else if (type == "MANHOLE") {}*/
     roadDefectsMarkerCluster.addLayer(L.marker(coordinates, {icon: icon}));
 }
 
@@ -125,6 +128,22 @@ mymap.on('zoomend', function(ev) {
     }
 });
 
+
+function updateEvaluationAsync() {
+    axios.get(API_ENDPOINT, {
+        params: {
+            latitude: mymap.getCenter().lat,
+            longitude: mymap.getCenter().lng, 
+            radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
+        }
+    }).then(function (response) {
+        console.log(response);
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+    
+}
 
 </script>
 </body>
