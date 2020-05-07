@@ -109,13 +109,13 @@ function drawLegs(legsJsonArray) {
     var legs = JSON.parse(legsJsonArray);
     legs.forEach(leg => {
         var legObj= JSON.stringify({from: leg.from, to: leg.to})
-        if(!legCache.hasKey(legObj)) {
+        if(!legCache.has(legObj)) {
             var polyline = L.polyline([
                 [leg.from.coordinates.latitude, leg.from.coordinates.longitude], 
                 [leg.to.coordinates.latitude, leg.to.coordinates.longitude]], 
                 {color: qualityToColor[leg.quality], weight: 5}
             ).addTo(legsLayer);
-            legCache.add(legObj, polyline)
+            legCache.set(legObj, polyline)
         } else {
             var polylineCached = legCache.get(legObj)
             if(polylineCached.color != qualityToColor[leg.quality]) {
