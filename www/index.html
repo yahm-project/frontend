@@ -15,6 +15,7 @@
     <script src="https://unpkg.com/leaflet-geosearch@2.7.0/dist/bundle.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@2.6.0/assets/css/leaflet.css">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
     <style>
         body {
             padding: 0;
@@ -31,16 +32,21 @@
 
 <script>
 const API_ENDPOINT = "http://localhost:8080"
-
 const MIN_ZOOM_TO_SHOW_DATA = 14
 
 var potHoleIcon = L.icon({
     iconUrl: '/static/img/pot-hole-marker.png',
-
     iconSize:     [70, 70], // size of the icon
     iconAnchor:   [35, 70], // point of the icon which will correspond to marker's location
     popupAnchor:  [35, 0] // point from which the popup should open relative to the iconAnchor
 });
+
+var roadIssuesMarkerCluster = L.markerClusterGroup();
+var legsLayer = L.layerGroup();
+var overlayMaps = {
+    "Road status": legsLayer,
+    "Road issues": roadIssuesMarkerCluster
+};
 
 var mymap = L.map('map', {
     center: [44.133331, 12.233333],
@@ -48,7 +54,8 @@ var mymap = L.map('map', {
     maxNativeZoom: 18,
     maxZoom: 18,
     minZoom: 6,
-    zoomControl: false
+    zoomControl: false,
+    layer: [roadIssuesMarkerCluster, legsLayer]
 });
 
 var MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2lhY29tb3RvbnRpbmkiLCJhIjoiY2s5Y3h0d2hxMDNjYjNtcGxmYTA3dnYzMSJ9.EoujETnFYtRxAox-ne97mQ'
@@ -56,9 +63,10 @@ L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(mymap);
 
-L.control.zoom({
-    position: 'bottomright'
-}).addTo(mymap);
+L.control.layers(null, overlayMaps).addTo(mymap)
+L.control.zoom({ position: 'bottomright'}).addTo(mymap);
+legsLayer.addTo(mymap)
+roadIssuesMarkerCluster.addTo(mymap)
 
 var lc = L.control.locate({
     position: 'bottomright',
@@ -85,29 +93,40 @@ const searchControl = new window.GeoSearch.GeoSearchControl({
 mymap.addControl(searchControl);
 
 
-var roadDefectsMarkerCluster = L.markerClusterGroup();
-mymap.addLayer(roadDefectsMarkerCluster);
-
-
-function addMarker(coordinates, type) {
+function drawRoadIssue(coordinates, type) {
     var icon = potHoleIcon
     /*if(type == "POTHOLE") {}
     else if (type == "EXPANSION_JOINT") {}
     else if (type == "SPEED_BUMP") {}
-    else if (type == "MANHOLE") {}*/
-    roadDefectsMarkerCluster.addLayer(L.marker(coordinates, {icon: icon}));
+    else if (type == "MANHOLE") {}
+    else if (type == "JOINT") {}*/
+    roadIssuesMarkerCluster.addLayer(L.marker(coordinates, {icon: icon}));
 }
 
-
-var qualityToColor = { 1: "green", 2: "yellow", 3: "red" };
-function drawRoadSegment(roadSegments) {
-    var segments = JSON.parse(roadSegments);
-    for(const segment of segments) {
-        console.log(segment)
-        console.log(segment.from.lat, segment.from.lng, segment.to.lat, segment.to.lng, qualityToColor[segment.quality])
-        var polyline = L.polyline([[segment.from.lat, segment.from.lng], [segment.to.lat, segment.to.lng]], {color: qualityToColor[segment.quality], weight: 5}).addTo(mymap);
-    }
+let legCache = new Map()
+let qualityToColor = { 0: "ligthgreen", 1: "green", 2: "yellow", 3: "red" , 4: "darkred"};
+function drawLegs(legsJsonArray) {
+    var legs = JSON.parse(legsJsonArray);
+    legs.forEach(leg => {
+        var legObj= JSON.stringify({from: leg.from, to: leg.to})
+        if(!legCache.hasKey(legObj)) {
+            var polyline = L.polyline([
+                [leg.from.coordinates.latitude, leg.from.coordinates.longitude], 
+                [leg.to.coordinates.latitude, leg.to.coordinates.longitude]], 
+                {color: qualityToColor[leg.quality], weight: 5}
+            ).addTo(legsLayer);
+            legCache.add(legObj, polyline)
+        } else {
+            var polylineCached = legCache.get(legObj)
+            if(polylineCached.color != qualityToColor[leg.quality]) {
+                polylineCached.setStyle({
+                    color: qualityToColor[leg.quality]
+                });
+            }
+        }
+    });
 }
+
 
 var lastCenter = mymap.getCenter()
 mymap.on('movestart', function(ev) {
@@ -130,20 +149,102 @@ mymap.on('zoomend', function(ev) {
 
 
 function updateEvaluationAsync() {
-    axios.get(API_ENDPOINT, {
+    axios.get(API_ENDPOINT + '/roads/evaluations', {
         params: {
             latitude: mymap.getCenter().lat,
             longitude: mymap.getCenter().lng, 
             radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
         }
-    }).then(function (response) {
-        console.log(response);
+    }).then(response => {
+        if(response.status = "200") {
+           drawLegs(response.data)
+        } else {
+            console.log('GET request on /roads/evaluations went wrong.')
+        }
     })
     .catch(function (error) {
-        console.log(error);
+        console.log('An error occurred on /roads/evaluations GET request: ' + error);
     });
     
 }
+
+
+
+//TODO: remove
+drawLegs(`[
+    {
+        "from": {
+            "id": 0,
+            "coordinates": {
+                "latitude": 44.133331,
+                "longitude": 12.233333
+            }
+        },
+        "to": {
+            "id": 1,
+            "coordinates": {
+                "latitude": 44.135331,
+                "longitude": 12.253333
+            }
+        },
+        "quality": 1,
+        "obstacles": {}
+    },
+    {
+        "from": {
+            "id": 1,
+            "coordinates": {
+                "latitude": 44.135331,
+                "longitude": 12.253333
+            }
+        },
+        "to": {
+            "id": 2,
+            "coordinates": {
+                "latitude": 44.137331,
+                "longitude": 12.273333
+            }
+        },
+        "quality": 1,
+        "obstacles": {}
+    },
+    {
+        "from": {
+            "id": 2,
+            "coordinates": {
+                "latitude": 44.137331,
+                "longitude": 12.273333
+            }
+        },
+        "to": {
+            "id": 3,
+            "coordinates": {
+                "latitude": 44.143331,
+                "longitude": 12.233333
+            }
+        },
+        "quality": 1,
+        "obstacles": {}
+    },
+    {
+        "from": {
+            "id": 3,
+            "coordinates": {
+                "latitude": 44.143331,
+                "longitude": 12.233333
+            }
+        },
+        "to": {
+            "id": 4,
+            "coordinates": {
+                "latitude": 44.143331,
+                "longitude": 12.263333
+            }
+        },
+        "quality": 2,
+        "obstacles": {}
+    }
+]`)
 
 </script>
 </body>
