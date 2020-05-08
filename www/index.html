@@ -21,253 +21,188 @@
             padding: 0;
             margin: 0;
         }
-        html, body, #map {
+        
+        html,
+        body,
+        #map {
             height: 100%;
             width: 100%;
         }
     </style>
 </head>
+
 <body>
-<div id="map"></div>
+    <div id="map"></div>
 
-<script>
-const API_ENDPOINT = "http://localhost:8080"
-const MIN_ZOOM_TO_SHOW_DATA = 14
+    <script>
+        const API_ENDPOINT = "http://localhost:8080"
+        const MIN_ZOOM_TO_SHOW_DATA = 14
 
-var POTHOLE_ICON = L.icon({
-    iconUrl: '/static/img/pot-hole-marker.png',
-    iconSize:     [70, 70], // size of the icon
-    iconAnchor:   [35, 70], // point of the icon which will correspond to marker's location
-    popupAnchor:  [35, 0] // point from which the popup should open relative to the iconAnchor
-});
+        var POTHOLE_ICON = L.icon({
+            iconUrl: '/static/img/pot-hole-marker.png',
+            iconSize: [70, 70], // size of the icon
+            iconAnchor: [35, 70], // point of the icon which will correspond to marker's location
+            popupAnchor: [35, 0] // point from which the popup should open relative to the iconAnchor
+        });
 
-var roadIssuesMarkerCluster = L.markerClusterGroup();
-var legsLayer = L.layerGroup();
-var overlayMaps = {
-    "Road status": legsLayer,
-    "Road issues": roadIssuesMarkerCluster
-};
+        var roadIssuesMarkerCluster = L.markerClusterGroup();
+        var legsLayer = L.layerGroup();
+        var overlayMaps = {
+            "Road status": legsLayer,
+            "Road issues": roadIssuesMarkerCluster
+        };
 
-var mymap = L.map('map', {
-    center: [44.133331, 12.233333],
-    zoom: 18,
-    maxNativeZoom: 18,
-    maxZoom: 18,
-    minZoom: 6,
-    zoomControl: false,
-    layer: [roadIssuesMarkerCluster, legsLayer]
-});
+        var mymap = L.map('map', {
+            center: [44.133331, 12.233333],
+            zoom: 18,
+            maxNativeZoom: 18,
+            maxZoom: 18,
+            minZoom: 6,
+            zoomControl: false,
+            layer: [roadIssuesMarkerCluster, legsLayer]
+        });
 
-var MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2lhY29tb3RvbnRpbmkiLCJhIjoiY2s5Y3h0d2hxMDNjYjNtcGxmYTA3dnYzMSJ9.EoujETnFYtRxAox-ne97mQ'
-L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN, {
-        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(mymap);
+        var MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2lhY29tb3RvbnRpbmkiLCJhIjoiY2s5Y3h0d2hxMDNjYjNtcGxmYTA3dnYzMSJ9.EoujETnFYtRxAox-ne97mQ'
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN, {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mymap);
 
-L.control.layers(null, overlayMaps).addTo(mymap)
-L.control.zoom({ position: 'bottomright'}).addTo(mymap);
-legsLayer.addTo(mymap)
-roadIssuesMarkerCluster.addTo(mymap)
+        L.control.layers(null, overlayMaps).addTo(mymap)
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(mymap);
+        legsLayer.addTo(mymap)
+        roadIssuesMarkerCluster.addTo(mymap)
 
-var lc = L.control.locate({
-    position: 'bottomright',
-    enableHighAccuracy: true,
-    flyTo: true,
-    locateOptions: {
-        maxZoom: 18
-    },
-    strings: {
-        title: "Show me where I am, yo!"
-    }}).addTo(mymap);
-lc.start()
-
-
-const provider = new window.GeoSearch.OpenStreetMapProvider();
-const searchControl = new window.GeoSearch.GeoSearchControl({
-  provider: provider,
-  style: 'bar',
-  showMarker: false,
-  autoClose: true,
-  retainZoomLevel: true,
-  searchLabel: 'Looking for new places?'
-});
-mymap.addControl(searchControl);
+        var lc = L.control.locate({
+            position: 'bottomright',
+            enableHighAccuracy: true,
+            flyTo: true,
+            locateOptions: {
+                maxZoom: 18
+            },
+            strings: {
+                title: "Show me where I am, yo!"
+            }
+        }).addTo(mymap);
+        lc.start()
 
 
-let obstacleCache = new Map() // cache for obstacles: "{type},{lat},{lng}" -> marker
-function drawObstacle(coordinates, type) {
-    let key = type + "," + coordinates[0] + "," + coordinates[1]
-    if(!obstacleCache.has(key)) {
-        var icon = POTHOLE_ICON
-        if(type == "POTHOLE") {
-            console.log('pothole added')
-        } else if (type == "SPEED_BUMP") {
-            console.log('speed bump added')
-        } else if (type == "MANHOLE") {
-            console.log('manhole added')
-        } else if (type == "JOINT") {
-            console.log('expansion joint added')
+        const provider = new window.GeoSearch.OpenStreetMapProvider();
+        const searchControl = new window.GeoSearch.GeoSearchControl({
+            provider: provider,
+            style: 'bar',
+            showMarker: false,
+            autoClose: true,
+            retainZoomLevel: true,
+            searchLabel: 'Looking for new places?'
+        });
+        mymap.addControl(searchControl);
+
+
+        let obstacleCache = new Map() // cache for obstacles: "{type},{lat},{lng}" -> marker
+        function drawObstacle(coordinates, type) {
+            let key = type + "," + coordinates[0] + "," + coordinates[1]
+            if (!obstacleCache.has(key)) {
+                var icon = POTHOLE_ICON
+                if (type == "POTHOLE") {
+                    console.log('pothole added')
+                } else if (type == "SPEED_BUMP") {
+                    console.log('speed bump added')
+                } else if (type == "MANHOLE") {
+                    console.log('manhole added')
+                } else if (type == "JOINT") {
+                    console.log('expansion joint added')
+                }
+                var marker = L.marker(coordinates, {
+                    icon: icon
+                })
+                roadIssuesMarkerCluster.addLayer(marker);
+                obstacleCache.set(key, marker)
+            }
         }
-        var marker = L.marker(coordinates, {icon: icon})
-        roadIssuesMarkerCluster.addLayer(marker);
-        obstacleCache.set(key, marker)
-    } 
-}
 
-function drawObstacles(obstaclesJson) {
-    if(obstaclesJson != null) {
-        for (var obstacleType of Object.keys(obstaclesJson)) {
-            obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType))
+        function drawObstacles(obstaclesJson) {
+            if(obstaclesJson != null) {
+                for (var obstacleType of Object.keys(obstaclesJson)) {
+                    obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType))
+                }
+            }
         }
-    }
 
-}
+        let legCache = new Map()
+        let qualityToColor = {
+            0: "ligthgreen",
+            1: "green",
+            2: "yellow",
+            3: "red",
+            4: "darkred"
+        };
+        function drawLegs(legsJsonArray) {
+            legsJsonArray.forEach(leg => {
+                var legObj= JSON.stringify({from: leg.from, to: leg.to})
+                if(!legCache.has(legObj)) {
+                    var polyline = L.polyline([
+                        [leg.from.coordinates.latitude, leg.from.coordinates.longitude], 
+                        [leg.to.coordinates.latitude, leg.to.coordinates.longitude]], 
+                        {color: qualityToColor[leg.quality], weight: 5}
+                    ).addTo(legsLayer);
+                    legCache.set(legObj, polyline)
+                } else {
+                    var polylineCached = legCache.get(legObj)
+                    if(polylineCached.color != qualityToColor[leg.quality]) {
+                        polylineCached.setStyle({
+                            color: qualityToColor[leg.quality]
+                        });
+                    }
+                }
+                drawObstacles(leg.obstacles)
+            });
+        }
 
-let legCache = new Map()
-let qualityToColor = { 0: "ligthgreen", 1: "green", 2: "yellow", 3: "red" , 4: "darkred"};
-function drawLegs(legsJsonArray) {
-    legsJsonArray.forEach(leg => {
-        var legObj= JSON.stringify({from: leg.from, to: leg.to})
-        if(!legCache.has(legObj)) {
-            var polyline = L.polyline([
-                [leg.from.coordinates.latitude, leg.from.coordinates.longitude], 
-                [leg.to.coordinates.latitude, leg.to.coordinates.longitude]], 
-                {color: qualityToColor[leg.quality], weight: 5}
-            ).addTo(legsLayer);
-            legCache.set(legObj, polyline)
-        } else {
-            var polylineCached = legCache.get(legObj)
-            if(polylineCached.color != qualityToColor[leg.quality]) {
-                polylineCached.setStyle({
-                    color: qualityToColor[leg.quality]
+
+        var lastCenter = mymap.getCenter()
+        mymap.on('movestart', function(ev) {
+            lastCenter = mymap.getCenter()
+        });
+
+        mymap.on('move', function(ev) {
+            if (!mymap.getBounds().contains(lastCenter) && mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
+                lastCenter = mymap.getCenter()
+                console.log("time to ask for new data", lastCenter)
+            }
+        });
+
+
+        mymap.on('zoomend', function(ev) {
+            if (mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
+                console.log("zoom has changed, asking for new data with more radius", ev)
+            }
+        });
+
+
+        function updateEvaluationAsync() {
+            axios.get(API_ENDPOINT + '/roads/evaluations', {
+                    params: {
+                        latitude: mymap.getCenter().lat,
+                        longitude: mymap.getCenter().lng,
+                        radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
+                    }
+                }).then(response => {
+                    if (response.status = "200") {
+                        drawLegs(response.data)
+                    } else {
+                        console.log('GET request on /roads/evaluations went wrong.')
+                    }
+                })
+                .catch(function(error) {
+                    console.log('An error occurred on /roads/evaluations GET request: ' + error);
                 });
-            }
+
         }
-        drawObstacles(leg.obstacles)
-    });
-}
 
-
-var lastCenter = mymap.getCenter()
-mymap.on('movestart', function(ev) {
-    lastCenter = mymap.getCenter()
-});
-
-mymap.on('move', function(ev) {
-    if(!mymap.getBounds().contains(lastCenter) && mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
-        lastCenter = mymap.getCenter()
-        console.log("time to ask for new data", lastCenter)
-    }
-});
-
-
-mymap.on('zoomend', function(ev) {
-    if(mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
-        console.log("zoom has changed, asking for new data with more radius", ev)
-    }
-});
-
-
-function updateEvaluationAsync() {
-    axios.get(API_ENDPOINT + '/roads/evaluations', {
-        params: {
-            latitude: mymap.getCenter().lat,
-            longitude: mymap.getCenter().lng, 
-            radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
-        }
-    }).then(response => {
-        console.log(response)
-        if(response.status = "200") {
-           drawLegs(response.data)
-        } else {
-            console.log('GET request on /roads/evaluations went wrong.')
-        }
-    })
-    .catch(function (error) {
-        console.log('An error occurred on /roads/evaluations GET request: ' + error);
-    });
-    
-}
-
-const interval = setInterval(updateEvaluationAsync, 5000);
-
-
-//TODO: remove
-/*drawLegs(`[
-    {
-        "from": {
-            "id": 0,
-            "coordinates": {
-                "latitude": 44.133331,
-                "longitude": 12.233333
-            }
-        },
-        "to": {
-            "id": 1,
-            "coordinates": {
-                "latitude": 44.135331,
-                "longitude": 12.253333
-            }
-        },
-        "quality": 1,
-        "obstacles": {}
-    },
-    {
-        "from": {
-            "id": 1,
-            "coordinates": {
-                "latitude": 44.135331,
-                "longitude": 12.253333
-            }
-        },
-        "to": {
-            "id": 2,
-            "coordinates": {
-                "latitude": 44.137331,
-                "longitude": 12.273333
-            }
-        },
-        "quality": 1,
-        "obstacles": {}
-    },
-    {
-        "from": {
-            "id": 2,
-            "coordinates": {
-                "latitude": 44.137331,
-                "longitude": 12.273333
-            }
-        },
-        "to": {
-            "id": 3,
-            "coordinates": {
-                "latitude": 44.143331,
-                "longitude": 12.233333
-            }
-        },
-        "quality": 1,
-        "obstacles": {}
-    },
-    {
-        "from": {
-            "id": 3,
-            "coordinates": {
-                "latitude": 44.143331,
-                "longitude": 12.233333
-            }
-        },
-        "to": {
-            "id": 4,
-            "coordinates": {
-                "latitude": 44.143331,
-                "longitude": 12.263333
-            }
-        },
-        "quality": 2,
-        "obstacles": {}
-    }
-]`)
-*/
-
-</script>
+        const interval = setInterval(updateEvaluationAsync, 5000);
+    </script>
 </body>
+
 </html>
