@@ -20,6 +20,7 @@ app.use(function(req, res) {
   res.status(404).send({url: req.originalUrl + ' not found'})
 });
 
-app.listen(80, function () {
-  console.log('Node API server started on port 3000!');
+let port = 80
+app.listen(port, function () {
+  console.log(`Node server started on port ${port} !`);
 });

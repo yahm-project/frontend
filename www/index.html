@@ -34,7 +34,7 @@
 const API_ENDPOINT = "http://localhost:8080"
 const MIN_ZOOM_TO_SHOW_DATA = 14
 
-var potHoleIcon = L.icon({
+var POTHOLE_ICON = L.icon({
     iconUrl: '/static/img/pot-hole-marker.png',
     iconSize:     [70, 70], // size of the icon
     iconAnchor:   [35, 70], // point of the icon which will correspond to marker's location
@@ -93,14 +93,34 @@ const searchControl = new window.GeoSearch.GeoSearchControl({
 mymap.addControl(searchControl);
 
 
-function drawRoadIssue(coordinates, type) {
-    var icon = potHoleIcon
-    /*if(type == "POTHOLE") {}
-    else if (type == "EXPANSION_JOINT") {}
-    else if (type == "SPEED_BUMP") {}
-    else if (type == "MANHOLE") {}
-    else if (type == "JOINT") {}*/
-    roadIssuesMarkerCluster.addLayer(L.marker(coordinates, {icon: icon}));
+let obstacleCache = new Map() // cache for obstacles: "{type},{lat},{lng}" -> marker
+function drawObstacle(coordinates, type) {
+    let key = type + "," + coordinates[0] + "," + coordinates[1]
+    if(!obstacleCache.has(key)) {
+        var icon = POTHOLE_ICON
+        if(type == "POTHOLE") {
+            console.log('pothole added')
+        } else if (type == "SPEED_BUMP") {
+            console.log('speed bump added')
+        } else if (type == "MANHOLE") {
+            console.log('manhole added')
+        } else if (type == "JOINT") {
+            console.log('expansion joint added')
+        }
+        var marker = L.marker(coordinates, {icon: icon})
+        roadIssuesMarkerCluster.addLayer(marker);
+        obstacleCache.set(key, marker)
+    } 
+}
+
+function drawObstacles(obstaclesJson) {
+    if(obstaclesJson != null) {
+        var obstaclesObj = JSON.parse(obstaclesJson);
+        for (var obstacleType of Object.keys(obstaclesObj)) {
+            obstaclesObj[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType))
+        }
+    }
+
 }
 
 let legCache = new Map()
@@ -124,6 +144,7 @@ function drawLegs(legsJsonArray) {
                 });
             }
         }
+        drawObstacles(JSON.stringify(leg.obstacles))
     });
 }
 
@@ -168,10 +189,11 @@ function updateEvaluationAsync() {
     
 }
 
+const interval = setInterval(updateEvaluationAsync, 5000);
 
 
 //TODO: remove
-drawLegs(`[
+/*drawLegs(`[
     {
         "from": {
             "id": 0,
@@ -245,6 +267,7 @@ drawLegs(`[
         "obstacles": {}
     }
 ]`)
+*/
 
 </script>
 </body>
