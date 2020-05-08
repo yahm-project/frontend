@@ -115,9 +115,8 @@ function drawObstacle(coordinates, type) {
 
 function drawObstacles(obstaclesJson) {
     if(obstaclesJson != null) {
-        var obstaclesObj = JSON.parse(obstaclesJson);
-        for (var obstacleType of Object.keys(obstaclesObj)) {
-            obstaclesObj[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType))
+        for (var obstacleType of Object.keys(obstaclesJson)) {
+            obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType))
         }
     }
 
@@ -126,8 +125,7 @@ function drawObstacles(obstaclesJson) {
 let legCache = new Map()
 let qualityToColor = { 0: "ligthgreen", 1: "green", 2: "yellow", 3: "red" , 4: "darkred"};
 function drawLegs(legsJsonArray) {
-    var legs = JSON.parse(legsJsonArray);
-    legs.forEach(leg => {
+    legsJsonArray.forEach(leg => {
         var legObj= JSON.stringify({from: leg.from, to: leg.to})
         if(!legCache.has(legObj)) {
             var polyline = L.polyline([
@@ -144,7 +142,7 @@ function drawLegs(legsJsonArray) {
                 });
             }
         }
-        drawObstacles(JSON.stringify(leg.obstacles))
+        drawObstacles(leg.obstacles)
     });
 }
 
@@ -177,6 +175,7 @@ function updateEvaluationAsync() {
             radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
         }
     }).then(response => {
+        console.log(response)
         if(response.status = "200") {
            drawLegs(response.data)
         } else {
