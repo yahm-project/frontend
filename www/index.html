@@ -6,7 +6,8 @@
     <script src="http://cdn.leafletjs.com/leaflet/v1.6.0/leaflet.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js"
+        charset="utf-8"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
@@ -16,23 +17,44 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@2.6.0/assets/css/leaflet.css">
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+
+    <!-- CSS only -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    
     <style>
-        body {
-            padding: 0;
-            margin: 0;
-        }
-        
-        html,
-        body,
-        #map {
+        html, body {
             height: 100%;
             width: 100%;
+        }
+
+        .min-100 {
+            min-height: 100%;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 
 <body>
-    <div id="map"></div>
+    <div class="container-fluid h-100 d-flex flex-column p-0">
+        <nav class="navbar bg-primary flex-shrink-0 justify-content-between">
+            <a class="navbar-brand" href="#">
+                <img src="https://mdbootstrap.com/img/logo/mdb-transparent.png" height="30" alt="mdb logo">
+            </a>            
+        </nav>
+        <div class="row flex-grow-1 m-0">
+            <div id="map"></div>
+        </div>
+    </div>
+    
+    
 
     <script>
         const API_ENDPOINT = "http://localhost:8080"
@@ -76,9 +98,12 @@
 
         var lc = L.control.locate({
             position: 'bottomright',
-            enableHighAccuracy: true,
             flyTo: true,
+            circleStyle: {
+                fillOpacity: 0.07
+            },
             locateOptions: {
+                enableHighAccuracy: true,
                 maxZoom: 18
             },
             strings: {
@@ -123,7 +148,7 @@
         }
 
         function drawObstacles(obstaclesJson) {
-            if(obstaclesJson != null) {
+            if (obstaclesJson != null) {
                 for (var obstacleType of Object.keys(obstaclesJson)) {
                     obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType))
                 }
@@ -132,7 +157,7 @@
 
         let legCache = new Map()
         let qualityToColor = {
-            0: "ligthgreen",
+            0: "lightgreen",
             1: "green",
             2: "yellow",
             3: "red",
@@ -140,17 +165,17 @@
         };
         function drawLegs(legsJsonArray) {
             legsJsonArray.forEach(leg => {
-                var legObj= JSON.stringify({from: leg.from, to: leg.to})
-                if(!legCache.has(legObj)) {
+                var legObj = JSON.stringify({ from: leg.from, to: leg.to })
+                if (!legCache.has(legObj)) {
                     var polyline = L.polyline([
-                        [leg.from.coordinates.latitude, leg.from.coordinates.longitude], 
-                        [leg.to.coordinates.latitude, leg.to.coordinates.longitude]], 
-                        {color: qualityToColor[leg.quality], weight: 5}
+                        [leg.from.coordinates.latitude, leg.from.coordinates.longitude],
+                        [leg.to.coordinates.latitude, leg.to.coordinates.longitude]],
+                        { color: qualityToColor[leg.quality], weight: 5 }
                     ).addTo(legsLayer);
                     legCache.set(legObj, polyline)
                 } else {
                     var polylineCached = legCache.get(legObj)
-                    if(polylineCached.color != qualityToColor[leg.quality]) {
+                    if (polylineCached.color != qualityToColor[leg.quality]) {
                         polylineCached.setStyle({
                             color: qualityToColor[leg.quality]
                         });
@@ -160,48 +185,60 @@
             });
         }
 
-
-        var lastCenter = mymap.getCenter()
-        mymap.on('movestart', function(ev) {
-            lastCenter = mymap.getCenter()
+        var lastPositionUsedForUpdate = mymap.getCenter()
+        var previousZoom = mymap.getZoom()
+        mymap.on('movestart', ev => {
+            previousZoom = mymap.getZoom()
         });
 
-        mymap.on('move', function(ev) {
-            if (!mymap.getBounds().contains(lastCenter) && mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
-                lastCenter = mymap.getCenter()
-                console.log("time to ask for new data", lastCenter)
+        /*
+        mymap.on('move', ev => {
+            if (ev.flyTo != true && !mymap.getBounds().contains(lastPositionUsedForUpdate) && mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
+                updateEvaluationAsync()
+                console.log("[move] new data requested", ev)
             }
         });
+        */
 
-
-        mymap.on('zoomend', function(ev) {
-            if (mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
-                console.log("zoom has changed, asking for new data with more radius", ev)
+        mymap.on('moveend', ev => {
+            if (
+                (
+                    (previousZoom < mymap.getZoom() && previousZoom <= MIN_ZOOM_TO_SHOW_DATA) || //zoom in, zoomed enough
+                    (ev.flyTo != true && previousZoom > mymap.getZoom()) || //zoom out, still zoomed over minimum
+                    (!mymap.getBounds().contains(lastPositionUsedForUpdate)) // moved out of boundaries
+                ) && mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
+                updateEvaluationAsync()
+                console.log("[moveEnd] new data requested", ev)
             }
         });
 
 
         function updateEvaluationAsync() {
+            lastPositionUsedForUpdate = mymap.getCenter()
             axios.get(API_ENDPOINT + '/roads/evaluations', {
-                    params: {
-                        latitude: mymap.getCenter().lat,
-                        longitude: mymap.getCenter().lng,
-                        radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
-                    }
-                }).then(response => {
-                    if (response.status = "200") {
-                        drawLegs(response.data)
-                    } else {
-                        console.log('GET request on /roads/evaluations went wrong.')
-                    }
-                })
-                .catch(function(error) {
-                    console.log('An error occurred on /roads/evaluations GET request: ' + error);
-                });
-
+                params: {
+                    latitude: lastPositionUsedForUpdate.lat,
+                    longitude: lastPositionUsedForUpdate.lng,
+                    radius: mymap.getBounds().getCenter().distanceTo(mymap.getBounds().getNorthWest())
+                }
+            }).then(response => {
+                if (response.status = "200") {
+                    drawLegs(response.data)
+                } else {
+                    console.log('GET request on /roads/evaluations went wrong.')
+                }
+            })
+            .catch(function (error) {
+                console.log('An error occurred on /roads/evaluations GET request: ' + error);
+            });
+            console.log('called')
         }
 
-        const interval = setInterval(updateEvaluationAsync, 5000);
+        const interval = setInterval(() => {
+            if (mymap.getZoom() > MIN_ZOOM_TO_SHOW_DATA) {
+                updateEvaluationAsync()
+            }
+        }, 10000); //periodic update (ms)
     </script>
 </body>
 
