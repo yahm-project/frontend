@@ -1,0 +1,96 @@
+:root {
+    --primaryColor: #4db6ac;
+    --primaryLightColor: #82e9de;
+    --primaryDarkColor: #00867d;
+    --primaryDarkColorTransparent: rgba(0, 134, 125, 0.6);
+    --secondaryColor: #e57373;
+    --secondaryLightColor: #ffa4a2;
+    --secondaryDarkColor: #af4448;
+    --primaryTextColor: #e8f5e9;
+    --secondaryTextColor: #ffebee;
+}
+
+@font-face {
+    font-family: "b&b";
+    src: url("/assets/font/BeautyAndTheBeast.ttf");
+}
+
+.writtenLogo {
+    font-family: "b&b";
+    font-size: 25pt;
+    color: white;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.min-100 {
+    min-height: 100%;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+div.leaflet-control-container {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+div.leaflet-control-geosearch.bar {
+    position: relative !important;
+    margin: 10px 0 0 0 !important;
+}
+
+nav.bg-primary {
+    background-color: var(--primaryColor) !important;
+}
+
+.leaflet-control-geosearch.bar form {
+    border: 2px solid var(--primaryDarkColor);
+}
+
+.leaflet-control-layers,
+.leaflet-bar {
+    box-shadow: 0 2px 6px var(--primaryDarkColor);
+}
+
+.leaflet-control-geosearch a.reset {
+    color: var(--primaryDarkColor);
+}
+
+.marker-cluster-small {
+    background-color: var(--primaryDarkColorTransparent)
+}
+
+.marker-cluster-small div {
+    background-color: var(--primaryDarkColor);
+}
+
+.marker-cluster-small div span {
+    color: white;
+}
+
+#splashContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: visible;
+    width: 100%;
+    height: 100%;
+}
+
+#splashScreen {
+    width: 90%;
+    height: 90%;
+}
+
+#pageContainer {
+    visibility: hidden;
+    height: 0%;
+}
