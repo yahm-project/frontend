@@ -20,7 +20,7 @@ app.use(function(req, res) {
     res.status(404).send({ url: req.originalUrl + ' not found' })
 });
 
-let port = 80
-app.listen(port, function() {
-    console.log(`Node server started on port ${port} !`);
+let port = 8081
+app.listen(port, function () {
+  console.log(`Node server started on port ${port} !`);
 });
