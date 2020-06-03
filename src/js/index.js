@@ -1,3 +1,7 @@
+import "leaflet-polylinedecorator"
+import "leaflet.markercluster"
+import "leaflet.locatecontrol"
+
 const MIN_ZOOM_TO_SHOW_DATA = 14
 
 var POTHOLE_ICON = L.icon({
@@ -48,11 +52,13 @@ let qualityToColor = {
     3: "#1b5e20",
     4: "#4caf50",
 };
+var lastPositionUsedForUpdate = mymap.getCenter()
 
 let obstacleCache = new Map() // cache for obstacles: "{type},{lat},{lng}" -> marker
-function drawObstacle(coordinates, type, useCache = true) {
+
+function drawObstacle(coordinates, type /*, useCache = true*/ ) {
     let key = type + "," + coordinates[0] + "," + coordinates[1]
-    if (useCache && !obstacleCache.has(key) || !useCache) {
+    if ( /*useCache &&*/ !obstacleCache.has(key) /*|| !useCache*/ ) {
         var icon = POTHOLE_ICON
         if (type == "POTHOLE") {
             console.log('pothole added')
@@ -63,13 +69,24 @@ function drawObstacle(coordinates, type, useCache = true) {
         var marker = L.marker(coordinates, {
             icon: icon
         })
-        marker.bindPopup('<button type="button" class="btn btn-danger" onclick="deleteObstacle(' + coordinates + ',  \'' + type + '\')"><i class="fa fa-trash"></i> Elimina</button>')
+        let deleteButton = $('<div> <button type="button" class="btn btn-danger"><i class="fa fa-trash"></i> Elimina</button> </div>')
+        marker.bindPopup(deleteButton.html())
+        deleteButton.children()[0].addEventListener("click", function() {
+            console.log("ciao")
+            deleteObstacle(coordinates[0], coordinates[1], type)
+        });
+        /*deleteButton.children()[0].click(function() {
+            console.log("ciao")
+            deleteObstacle(coordinates[0], coordinates[1], type)
+        })
+        console.log(deleteButton)*/
         roadIssuesMarkerCluster.addLayer(marker);
         obstacleCache.set(key, marker)
     }
 }
 
 function deleteObstacle(latitude, longitude, type) {
+    console.log("ANTONIO ")
     axios.delete(__SERVER_ENDPOINT__ + '/roads/obstacles', {
             params: {
                 latitude: latitude,
@@ -79,8 +96,10 @@ function deleteObstacle(latitude, longitude, type) {
         }).then(response => {
             if (response.status = "200") {
                 let key = type + "," + latitude + "," + longitude
+                let markerToDelete = obstacleCache.get(key)
+                roadIssuesMarkerCluster.removeLayer(markerToDelete)
                 obstacleCache.delete(key)
-                updateEvaluationAsync(false)
+                    // updateEvaluationAsync()
             } else {
                 console.log('DELETE request on /roads/obstacles went wrong.')
             }
@@ -90,18 +109,15 @@ function deleteObstacle(latitude, longitude, type) {
         });
 }
 
-function drawObstacles(obstaclesJson, useCache = true) {
+function drawObstacles(obstaclesJson /*, useCache = true*/ ) {
     if (obstaclesJson != null && Object.keys(obstaclesJson).length !== 0) {
         for (var obstacleType of Object.keys(obstaclesJson)) {
-            obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType, useCache))
+            obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType /*, useCache*/ ))
         }
     }
 }
 
-function drawLegs(legsJsonArray, useCache = true) {
-    if (!useCache) {
-        roadIssuesMarkerCluster.clearLayers();
-    }
+function drawLegs(legsJsonArray /*, useCache = true*/ ) {
     legsJsonArray.forEach(leg => {
         var legObj = JSON.stringify({
             from: leg.from,
@@ -113,8 +129,16 @@ function drawLegs(legsJsonArray, useCache = true) {
                 [leg.to.coordinates.latitude, leg.to.coordinates.longitude]
             ], {
                 color: qualityToColor[leg.quality],
-                weight: 5
+                weight: 5,
             }).addTo(legsLayer);
+            L.polylineDecorator(polyline, {
+                patterns: [{
+                    offset: '100%',
+                    repeat: 0,
+                    symbol: L.Symbol.dash({ pixelSize: 0, pathOptions: { color: "white", weight: 5 } })
+                }]
+            }).addTo(legsLayer);
+            polyline.bindPopup('fromId: ' + leg.from.id + ' toId: ' + leg.to.id)
             legCache.set(legObj, polyline)
         } else {
             var polylineCached = legCache.get(legObj)
@@ -124,11 +148,11 @@ function drawLegs(legsJsonArray, useCache = true) {
                 });
             }
         }
-        drawObstacles(leg.obstacles, useCache)
+        drawObstacles(leg.obstacles /*, useCache*/ )
     });
 }
 
-function updateEvaluationAsync(useCache = true) {
+function updateEvaluationAsync( /*useCache = true*/ ) {
     lastPositionUsedForUpdate = mymap.getCenter()
     axios.get(__SERVER_ENDPOINT__ + '/roads/evaluations', {
             params: {
@@ -138,7 +162,7 @@ function updateEvaluationAsync(useCache = true) {
             }
         }).then(response => {
             if (response.status = "200") {
-                drawLegs(response.data, useCache)
+                drawLegs(response.data /*, useCache*/ )
             } else {
                 console.log('GET request on /roads/evaluations went wrong.')
             }
@@ -146,7 +170,7 @@ function updateEvaluationAsync(useCache = true) {
         .catch(function(error) {
             console.log('An error occurred on /roads/evaluations GET request: ' + error);
         });
-    console.log('called')
+    console.log("refresh")
 }
 
 
@@ -180,7 +204,6 @@ $(document).ready(function() {
 
     mymap.addControl(searchControl);
 
-    var lastPositionUsedForUpdate = mymap.getCenter()
     var previousZoom = mymap.getZoom()
     mymap.on('movestart', ev => {
         previousZoom = mymap.getZoom()
