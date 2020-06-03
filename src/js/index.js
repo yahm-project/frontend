@@ -1,7 +1,4 @@
-
-const API_ENDPOINT = "http://localhost:8080"
 const MIN_ZOOM_TO_SHOW_DATA = 14
-var MAPBOX_TOKEN = 'pk.eyJ1IjoiZ2lhY29tb3RvbnRpbmkiLCJhIjoiY2s5Y3h0d2hxMDNjYjNtcGxmYTA3dnYzMSJ9.EoujETnFYtRxAox-ne97mQ'
 
 var POTHOLE_ICON = L.icon({
     iconUrl: 'assets/img/pot-hole-marker.png',
@@ -73,7 +70,7 @@ function drawObstacle(coordinates, type, useCache = true) {
 }
 
 function deleteObstacle(latitude, longitude, type) {
-    axios.delete(API_ENDPOINT + '/roads/obstacles', {
+    axios.delete(__SERVER_ENDPOINT__ + '/roads/obstacles', {
             params: {
                 latitude: latitude,
                 longitude: longitude,
@@ -133,7 +130,7 @@ function drawLegs(legsJsonArray, useCache = true) {
 
 function updateEvaluationAsync(useCache = true) {
     lastPositionUsedForUpdate = mymap.getCenter()
-    axios.get(API_ENDPOINT + '/roads/evaluations', {
+    axios.get(__SERVER_ENDPOINT__ + '/roads/evaluations', {
             params: {
                 latitude: lastPositionUsedForUpdate.lat,
                 longitude: lastPositionUsedForUpdate.lng,
@@ -154,7 +151,7 @@ function updateEvaluationAsync(useCache = true) {
 
 
 $(document).ready(function() {
-    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN, {
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}?access_token=' + __MAPBOX_TOKEN__, {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(mymap);
 
