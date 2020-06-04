@@ -56,9 +56,9 @@ var lastPositionUsedForUpdate = mymap.getCenter()
 
 let obstacleCache = new Map() // cache for obstacles: "{type},{lat},{lng}" -> marker
 
-function drawObstacle(coordinates, type /*, useCache = true*/ ) {
+function drawObstacle(coordinates, type, legFromId, legToId) {
     let key = type + "," + coordinates[0] + "," + coordinates[1]
-    if ( /*useCache &&*/ !obstacleCache.has(key) /*|| !useCache*/ ) {
+    if (!obstacleCache.has(key)) {
         var icon = POTHOLE_ICON
         if (type == "POTHOLE") {
             console.log('pothole added')
@@ -69,55 +69,52 @@ function drawObstacle(coordinates, type /*, useCache = true*/ ) {
         var marker = L.marker(coordinates, {
             icon: icon
         })
-        let deleteButton = $('<div> <button type="button" class="btn btn-danger"><i class="fa fa-trash"></i> Elimina</button> </div>')
-        marker.bindPopup(deleteButton.html())
-        deleteButton.children()[0].addEventListener("click", function() {
-            console.log("ciao")
-            deleteObstacle(coordinates[0], coordinates[1], type)
-        });
-        /*deleteButton.children()[0].click(function() {
-            console.log("ciao")
-            deleteObstacle(coordinates[0], coordinates[1], type)
-        })
-        console.log(deleteButton)*/
+        marker.bindPopup('<button type="button" class="btn btn-danger" onclick="deleteObstacle(' + coordinates + ',  \'' + type + '\')"><i class="fa fa-trash"></i> Elimina</button>')
         roadIssuesMarkerCluster.addLayer(marker);
-        obstacleCache.set(key, marker)
+        obstacleCache.set(key, {
+            marker: marker,
+            legFromId: legFromId,
+            legToId: legToId
+        })
     }
 }
 
-function deleteObstacle(latitude, longitude, type) {
-    console.log("ANTONIO ")
-    axios.delete(__SERVER_ENDPOINT__ + '/roads/obstacles', {
-            params: {
-                latitude: latitude,
-                longitude: longitude,
-                obstacleType: type
-            }
-        }).then(response => {
-            if (response.status = "200") {
-                let key = type + "," + latitude + "," + longitude
-                let markerToDelete = obstacleCache.get(key)
-                roadIssuesMarkerCluster.removeLayer(markerToDelete)
-                obstacleCache.delete(key)
-                    // updateEvaluationAsync()
-            } else {
-                console.log('DELETE request on /roads/obstacles went wrong.')
-            }
-        })
-        .catch(function(error) {
-            console.log('An error occurred on /roads/obstacles DELETE request: ' + error);
-        });
+window.deleteObstacle = function(latitude, longitude, type) {
+    let key = type + "," + latitude + "," + longitude
+    if (obstacleCache.has(key)) {
+        let obstacleInfo = obstacleCache.get(key)
+        axios.delete(__SERVER_ENDPOINT__ + '/roads/obstacles', {
+                params: {
+                    latitude: latitude,
+                    longitude: longitude,
+                    obstacleType: type,
+                    legFromId: obstacleInfo.legFromId,
+                    legToId: obstacleInfo.legToId
+                }
+            }).then(response => {
+                if (response.status = "200") {
+                    let markerToDelete = obstacleInfo.marker
+                    roadIssuesMarkerCluster.removeLayer(markerToDelete)
+                    obstacleCache.delete(key)
+                } else {
+                    console.log('DELETE request on /roads/obstacles went wrong.')
+                }
+            })
+            .catch(function(error) {
+                console.log('An error occurred on /roads/obstacles DELETE request: ' + error);
+            });
+    }
 }
 
-function drawObstacles(obstaclesJson /*, useCache = true*/ ) {
+function drawObstacles(obstaclesJson, legFromId, legToId) {
     if (obstaclesJson != null && Object.keys(obstaclesJson).length !== 0) {
         for (var obstacleType of Object.keys(obstaclesJson)) {
-            obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType /*, useCache*/ ))
+            obstaclesJson[obstacleType].forEach(obstacle => drawObstacle([obstacle.latitude, obstacle.longitude], obstacleType, legFromId, legToId))
         }
     }
 }
 
-function drawLegs(legsJsonArray /*, useCache = true*/ ) {
+function drawLegs(legsJsonArray) {
     legsJsonArray.forEach(leg => {
         var legObj = JSON.stringify({
             from: leg.from,
@@ -148,11 +145,11 @@ function drawLegs(legsJsonArray /*, useCache = true*/ ) {
                 });
             }
         }
-        drawObstacles(leg.obstacles /*, useCache*/ )
+        drawObstacles(leg.obstacles, leg.from.id, leg.to.id)
     });
 }
 
-function updateEvaluationAsync( /*useCache = true*/ ) {
+function updateEvaluationAsync() {
     lastPositionUsedForUpdate = mymap.getCenter()
     axios.get(__SERVER_ENDPOINT__ + '/roads/evaluations', {
             params: {
@@ -162,7 +159,7 @@ function updateEvaluationAsync( /*useCache = true*/ ) {
             }
         }).then(response => {
             if (response.status = "200") {
-                drawLegs(response.data /*, useCache*/ )
+                drawLegs(response.data)
             } else {
                 console.log('GET request on /roads/evaluations went wrong.')
             }
@@ -226,6 +223,7 @@ $(document).ready(function() {
             updateEvaluationAsync()
         }
     }, 10000); //periodic update (ms)
+    if (1 === 0) deleteObstacle(0, 0, 0) //workaround :(
     setTimeout(() => {
         $("#splashContainer").css({
             "visibility": "hidden",
