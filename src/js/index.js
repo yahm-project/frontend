@@ -223,7 +223,6 @@ $(document).ready(function() {
             updateEvaluationAsync()
         }
     }, 10000); //periodic update (ms)
-    if (1 === 0) deleteObstacle(0, 0, 0) //workaround :(
     setTimeout(() => {
         $("#splashContainer").css({
             "visibility": "hidden",

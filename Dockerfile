@@ -4,6 +4,6 @@ COPY . /frontend
 
 WORKDIR /frontend
 
-RUN npm install
+RUN npm install --save-dev
 
 CMD npm start
