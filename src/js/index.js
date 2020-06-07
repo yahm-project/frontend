@@ -240,13 +240,14 @@ $(document).ready(function() {
         }
     }, 10000); //periodic update (ms)
     setTimeout(() => {
-        $("#splashContainer").css({
-            "visibility": "hidden",
-            "height": "0% "
-        });
         $("#pageContainer").css({
-            "visibility": "visible",
-            "height": "100% "
-        });
-    }, 4000)
+            "visibility": "visible"
+        })
+        $("#map").height($("#mapContainer").height()); 
+        mymap.invalidateSize();
+        $("#splashContainer").fadeOut(300, function() {
+            $(this).remove();
+        })
+        //$(window).trigger('resize');
+    }, 3500)
 });
