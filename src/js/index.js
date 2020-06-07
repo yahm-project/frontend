@@ -1,6 +1,22 @@
+
+import 'bootstrap' 
+import "bootstrap/dist/css/bootstrap.min.css"
+import "leaflet.locatecontrol/dist/L.Control.Locate.min.css"
+import "leaflet-geosearch/assets/css/leaflet.css"
+import "leaflet/dist/leaflet.css"
+import "leaflet.markercluster/dist/MarkerCluster.css"
+import "leaflet.markercluster/dist/MarkerCluster.Default.css"
+import "leaflet.locatecontrol/dist/L.Control.Locate.min.css"
+import "@fortawesome/fontawesome-free/css/all.min.css"
+import "../css/index.css"
+
+import L from 'leaflet'
 import "leaflet-polylinedecorator"
 import "leaflet.markercluster"
 import "leaflet.locatecontrol"
+import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch'
+const axios = require('axios').default;
+
 
 const MIN_ZOOM_TO_SHOW_DATA = 14
 
@@ -34,8 +50,8 @@ var mymap = L.map('map', {
     layer: [roadIssuesMarkerCluster, legsLayer]
 });
 
-const provider = new window.GeoSearch.OpenStreetMapProvider();
-const searchControl = new window.GeoSearch.GeoSearchControl({
+const provider = new OpenStreetMapProvider();
+const searchControl = new GeoSearchControl({
     provider: provider,
     style: 'bar',
     showMarker: false,
@@ -232,5 +248,5 @@ $(document).ready(function() {
             "visibility": "visible",
             "height": "100% "
         });
-    }, 4300)
+    }, 4000)
 });

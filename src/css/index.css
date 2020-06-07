@@ -42,7 +42,7 @@ div.leaflet-control-container {
     justify-content: space-evenly;
 }
 
-div.leaflet-control-geosearch.bar {
+div.leaflet-control-geosearch.leaflet-geosearch-bar {
     position: relative !important;
     margin: 10px 0 0 0 !important;
 }
@@ -51,8 +51,12 @@ nav.bg-primary {
     background-color: var(--primaryColor) !important;
 }
 
-.leaflet-control-geosearch.bar form {
+.leaflet-control-geosearch.leaflet-geosearch-bar form {
     border: 2px solid var(--primaryDarkColor);
+}
+
+.leaflet-control-geosearch form input {
+    height: 30px;
 }
 
 .leaflet-control-layers,
@@ -62,6 +66,7 @@ nav.bg-primary {
 
 .leaflet-control-geosearch a.reset {
     color: var(--primaryDarkColor);
+    font-size: 20px;
 }
 
 .marker-cluster-small {
