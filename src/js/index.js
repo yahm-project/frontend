@@ -62,11 +62,11 @@ const searchControl = new GeoSearchControl({
 
 let legCache = new Map()
 let qualityToColor = {
-    0: "#7f0000",
-    1: "#f44336",
-    2: "#ffeb3b",
-    3: "#1b5e20",
-    4: "#4caf50",
+    0: "#7F0000",
+    1: "#D32F2F",
+    2: "#FF8F00",
+    3: "#FBC02D",
+    4: "#388E3C",
 };
 var lastPositionUsedForUpdate = mymap.getCenter()
 
