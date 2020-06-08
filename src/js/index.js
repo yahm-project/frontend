@@ -1,5 +1,4 @@
-
-import 'bootstrap' 
+import 'bootstrap'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css"
 import "leaflet-geosearch/assets/css/leaflet.css"
@@ -253,7 +252,5 @@ $(document).ready(function() {
         $("#splashContainer").fadeOut(300, function() {
             $(this).remove();
         })
-    }, 3500)
-
-    
+    }, 4000)
 });
