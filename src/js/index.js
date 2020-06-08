@@ -243,11 +243,17 @@ $(document).ready(function() {
         $("#pageContainer").css({
             "visibility": "visible"
         })
-        $("#map").height($("#mapContainer").height()); 
-        mymap.invalidateSize();
+
+        $(window).on("resize", function () {
+            $("#map").height(0)
+            $("#map").height($("#mapContainer").height())
+            mymap.invalidateSize(); 
+        }).trigger('resize')
+        
         $("#splashContainer").fadeOut(300, function() {
             $(this).remove();
         })
-        //$(window).trigger('resize');
     }, 3500)
+
+    
 });
