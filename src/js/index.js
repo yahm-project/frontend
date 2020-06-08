@@ -1,5 +1,4 @@
-
-import 'bootstrap' 
+import 'bootstrap'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css"
 import "leaflet-geosearch/assets/css/leaflet.css"
@@ -243,11 +242,14 @@ $(document).ready(function() {
         $("#pageContainer").css({
             "visibility": "visible"
         })
-        $("#map").height($("#mapContainer").height()); 
+        $("#map").height($("#mapContainer").height());
         mymap.invalidateSize();
         $("#splashContainer").fadeOut(300, function() {
             $(this).remove();
         })
-        //$(window).trigger('resize');
-    }, 3500)
+        $("#mobileSplashContainer").fadeOut(300, function() {
+                $(this).remove();
+            })
+            //$(window).trigger('resize');
+    }, 4000)
 });
