@@ -16,6 +16,9 @@ global.appRoot = path.resolve(__dirname);
 app.get('/', function(req, res) {
     res.sendFile(__dirname + '/dist/index.html');
 });
+app.get('/service-worker.js', function(req, res) {
+    res.sendFile(path.resolve('service-worker.js'))
+});
 
 app.use(function(req, res) {
     res.status(404).send({ url: req.originalUrl + ' not found' })
@@ -23,6 +26,6 @@ app.use(function(req, res) {
 
 let port = process.env.BIND_PORT
 
-app.listen(port, function () {
-  console.log(`Node server started on port ${port} !`);
+app.listen(port, function() {
+    console.log(`Node server started on port ${port} !`);
 });
